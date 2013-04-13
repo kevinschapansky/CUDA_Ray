@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <vector>
 #include <string>
+#include <stdio.h>
 
 #include "Raytracer.h"
 
@@ -16,13 +17,22 @@ void parseFileIntoBlocks(std::string fileName, std::vector<std::string> & rawCom
 
 int main(int argc, char **argv) {
     std::vector<std::string> rawComponents;
+    std::string fileFlag = "-I";
+    int width, height;
     
-    if (argc != ARG_COUNT) {
+    if (argc != ARG_COUNT || fileFlag.compare(argv[FILE_FLAG]) != 0) {
         printf("Usage: raytrace <width> <height> -I <fileName\n");
         return EXIT_FAILURE;
     }
+    
+    width = strtol(argv[WIDTH_POS], NULL, 10);
+    height = strtol(argv[HEIGHT_POS], NULL, 10);
+    
     parseFileIntoBlocks(argv[FILE_POS], rawComponents);
-    Raytracer tracer(rawComponents);
+    Raytracer tracer(width, height, rawComponents);
+    Image* result = tracer.TraceScene();
+    
+    result->WriteTga((char*)"awesome.tga", true);
     
     return EXIT_SUCCESS;
 }
