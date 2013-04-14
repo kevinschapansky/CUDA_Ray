@@ -11,16 +11,31 @@
 #include "Finish.h"
 #include "Transformations.h"
 
-class Plane {
-public:
-    glm::vec3* Normal;
+typedef struct Plane {
+    glm::vec3 Normal;
     float Distance;
-    Pigment* Pig;
+    Pigment Pig;
     Transformations* Trans;
-    Finish* Fin;
+    Finish Fin;
     
-    Plane(std::string triangleParams);
-    Plane();
-};
+    Plane(std::string planeParams) {
+        std::string pigmentInfo;
+        std::string finishInfo;
+        Normal = *ParsingUtility::NamedBracketedParameterToVec3(planeParams, "<", 0, 1);
+        ParsingUtility::NamedSingleParameterToFloat(planeParams, ",", 3, Distance);
+        
+        if (ParsingUtility::NamedBracketedParameterStringExtraction(planeParams, "pigment", pigmentInfo) > 0) {
+            Pig = Pigment(pigmentInfo);
+        }
+        if (ParsingUtility::NamedBracketedParameterStringExtraction(planeParams, "finish", finishInfo) > 0) {
+            Fin = Finish(finishInfo);
+        }
+        Trans = new Transformations(planeParams);
+    }
+    
+    Plane() {
+        
+    }
+} Plane;
 
 #endif

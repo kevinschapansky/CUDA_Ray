@@ -29,7 +29,6 @@ public:
 
 class Transformations {
 public:
-    
     std::vector<Operation *> Operations;
     
     Transformations(std::string transformationParams);

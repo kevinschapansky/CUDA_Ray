@@ -10,15 +10,22 @@
 
 #include "ParsingUtility.h"
 
-class Camera {
-public:
-    glm::vec3* Location;
-    glm::vec3* Up;
-    glm::vec3* Right;
-    glm::vec3* Look_At;
+typedef struct Camera {
+    glm::vec3 Location;
+    glm::vec3 Up;
+    glm::vec3 Right;
+    glm::vec3 Look_At;
     
-    Camera(std::string cameraParams);
-    Camera();
-};
+    Camera(std::string cameraParams) {
+        Location = *ParsingUtility::NamedBracketedParameterToVec3(cameraParams, "location", 0, 1);
+        Up = *ParsingUtility::NamedBracketedParameterToVec3(cameraParams, "up", 0, 1);
+        Right = *ParsingUtility::NamedBracketedParameterToVec3(cameraParams, "right", 0, 1);
+        Look_At = *ParsingUtility::NamedBracketedParameterToVec3(cameraParams, "look_at", 0, 1);
+    }
+    
+    Camera() {
+        
+    }
+} Camera;
 
 #endif

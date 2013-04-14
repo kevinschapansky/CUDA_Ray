@@ -8,13 +8,20 @@
 
 #include "ParsingUtility.h"
 
-class Pigment {
-public:
-    glm::vec3* Color;
+typedef struct Pigment {
+    glm::vec3 Color;
     float Filter;
     
-    Pigment(std::string pigmentParams);
-    Pigment();
-};
+    Pigment(std::string pigmentParams) {
+        Color = *ParsingUtility::NamedBracketedParameterToVec3(pigmentParams, "color rgb", 0, 1);
+        if (ParsingUtility::NamedSingleParameterToFloat(pigmentParams, ",", 3, Filter) < 0) {
+            Filter = 0;
+        }
+    }
+    
+    Pigment() {
+        
+    }
+} Pigment;
 
 #endif

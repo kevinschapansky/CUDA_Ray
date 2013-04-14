@@ -3,10 +3,10 @@
 
 /* Color struct */
 typedef struct color_struct {
-   double r;
-   double g;
-   double b;
-   double f; // "filter" or "alpha"
+   float r;
+   float g;
+   float b;
+   float f; // "filter" or "alpha"
 } color_t;
 
 #endif

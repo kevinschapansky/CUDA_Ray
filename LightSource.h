@@ -8,13 +8,18 @@
 
 #include "ParsingUtility.h"
 
-class LightSource {
-public:
-    glm::vec3* Position;
-    glm::vec3* Color;
+typedef struct LightSource {
+    glm::vec3 Position;
+    glm::vec3 Color;
     
-    LightSource(std::string lightParams);
-    LightSource();
-};
+    LightSource(std::string lightParams) {
+        Position = *ParsingUtility::NamedBracketedParameterToVec3(lightParams, "<", 0, 1);
+        Color = *ParsingUtility::NamedBracketedParameterToVec3(lightParams, "color rgb", 0, 1);
+    }
+    
+    LightSource() {
+        
+    }
+} LightSource;
 
 #endif

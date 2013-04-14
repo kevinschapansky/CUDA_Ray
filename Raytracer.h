@@ -20,32 +20,50 @@
 #include "Image.h"
 #include "Types.h"
 
-struct Ray {
-    glm::vec3 d;
-    glm::vec3 p0;
-};
-
-class Raytracer {
-public:
-    Raytracer(int width, int height, std::vector<std::string> rawComponents);
+typedef struct SceneParameters {
+    glm::vec3 U;
+    glm::vec3 V;
+    glm::vec3 W;
     
-    Image* TraceScene();
-private:
+    float Left;
+    float Right;
+    float Top;
+    float Bottom;
+} SceneParameters;
+
+typedef struct SceneData {
     int Width;
     int Height;
     
-    Camera *Cam;
-    std::vector<LightSource *> Lights;
-    std::vector<Sphere *> Spheres;
-    std::vector<Box *> Boxes;
-    std::vector<Cone *> Cones;
-    std::vector<Plane *> Planes;
-    std::vector<Triangle *> Triangles;
+    SceneParameters Params;
+    Camera Cam;
+    LightSource* Lights;
+    LightSource* Lights_d;
+    int NumLights;
+    Plane* Planes;
+    Plane* Planes_d;
+    int NumPlanes;
+    Sphere* Spheres;
+    Sphere* Spheres_d;
+    int NumSpheres;
+} SceneData;
+
+class Raytracer {
+public:
+    SceneData Data;
+    std::vector<LightSource> Lights;
+    std::vector<Sphere> Spheres;
+    std::vector<Plane> Planes;
     
-    std::vector<Ray *> Rays;
+    Raytracer(int width, int height, std::vector<std::string> rawComponents);
     
+    Image* TraceScene();
+    void TraceSceneNoCUDA();
+private:
+    Image* TracedScene;
+    
+    void SetupAndLaunchCUDA();
     void ParseRawComponents(std::vector<std::string> components);
-    void GenerateRays();
 };
 
 #endif
