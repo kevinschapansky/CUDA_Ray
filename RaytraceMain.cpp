@@ -32,7 +32,11 @@ int main(int argc, char **argv) {
     Raytracer tracer(width, height, rawComponents);
     Image* result = tracer.TraceScene();
     
-    result->WriteTga((char*)"awesome.tga", true);
+    std::string fileName = argv[FILE_POS];
+    fileName = fileName.substr(0, fileName.length() - 4);
+    fileName += ".tga";
+    
+    result->WriteTga((char*)fileName.c_str(), true);
     
     return EXIT_SUCCESS;
 }

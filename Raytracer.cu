@@ -1,12 +1,5 @@
 #include "Raytracer.h"
 
-__global__ void CUDATest(int *Data, int N) {
-    int i = (blockIdx.x * blockDim.x) + threadIdx.x;
-    int j = (blockIdx.y * blockDim.y) + threadIdx.y;
-    
-    if (i * j < N) Data[i*j] = i * j;
-}
-
 __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
     int j = (blockIdx.y * blockDim.y) + threadIdx.y;
@@ -188,15 +181,15 @@ void Raytracer::SetupAndLaunchCUDA() {
     Sphere *spheres_d;
     Plane *planes_d;
     
-    cudaMalloc((void **) &lights_d, Data.NumLights * sizeof(LightSource));
-    cudaMalloc((void **) &spheres_d, Data.Width * Data.NumSpheres * sizeof(Sphere));
-    cudaMalloc((void **) &planes_d, Data.Width * Data.NumPlanes * sizeof(Plane));
+    HandleCUDAError(cudaMalloc((void **) &lights_d, Data.NumLights * sizeof(LightSource)));
+    HandleCUDAError(cudaMalloc((void **) &spheres_d, Data.Width * Data.NumSpheres * sizeof(Sphere)));
+    HandleCUDAError(cudaMalloc((void **) &planes_d, Data.Width * Data.NumPlanes * sizeof(Plane)));
     
-    cudaMemcpy(lights_d, Data.Lights, Data.NumLights * sizeof(LightSource), cudaMemcpyHostToDevice);
-    cudaMemcpy(spheres_d, Data.Spheres, Data.NumSpheres * sizeof(Sphere), cudaMemcpyHostToDevice);
-    cudaMemcpy(planes_d, Data.Planes, Data.NumPlanes * sizeof(Plane), cudaMemcpyHostToDevice);
+    HandleCUDAError(cudaMemcpy(lights_d, Data.Lights, Data.NumLights * sizeof(LightSource), cudaMemcpyHostToDevice));
+    HandleCUDAError(cudaMemcpy(spheres_d, Data.Spheres, Data.NumSpheres * sizeof(Sphere), cudaMemcpyHostToDevice));
+    HandleCUDAError(cudaMemcpy(planes_d, Data.Planes, Data.NumPlanes * sizeof(Plane), cudaMemcpyHostToDevice));
     
-    cudaMalloc((void **) &scenePixels_d, Data.Width * Data.Height * sizeof(color_t));
+    HandleCUDAError(cudaMalloc((void **) &scenePixels_d, Data.Width * Data.Height * sizeof(color_t)));
                
     cudaData_d.Lights = lights_d;
     cudaData_d.Spheres = spheres_d;
@@ -204,8 +197,7 @@ void Raytracer::SetupAndLaunchCUDA() {
     
     CUDATrace <<<numBlocks, threadsPerBlock>>> (cudaData_d, scenePixels_d, Data.Width * Data.Height);
     
-    cudaMemcpy(scenePixels_h, scenePixels_d, Data.Width * Data.Height * sizeof(color_t), cudaMemcpyDeviceToHost);
-   
+    HandleCUDAError(cudaMemcpy(scenePixels_h, scenePixels_d, Data.Width * Data.Height * sizeof(color_t), cudaMemcpyDeviceToHost));
     
     for (int i = 0; i < Data.Width; i++) {
         for (int j = 0; j < Data.Height; j++) {
@@ -237,4 +229,11 @@ void Raytracer::ParseRawComponents(std::vector<std::string> components) {
     
     Data.Planes = Planes.data();
     Data.NumPlanes = Planes.size();
+}
+
+void Raytracer::HandleCUDAError(cudaError_t error) {
+    if (error != cudaSuccess) {
+        printf("CUDA Problem: %s\n", cudaGetErrorString(error));
+        exit(-1);
+    }
 }

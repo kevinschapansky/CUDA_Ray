@@ -6,6 +6,7 @@
 #include <cuda.h>
 #include <stdio.h>
 #include <cfloat>
+#include <driver_types.h>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -64,6 +65,7 @@ private:
     
     void SetupAndLaunchCUDA();
     void ParseRawComponents(std::vector<std::string> components);
+    void HandleCUDAError(cudaError_t error);
 };
 
 #endif
