@@ -9,18 +9,32 @@
 #include "ParsingUtility.h"
 #include "Pigment.h"
 #include "Finish.h"
-#include "Transformations.h"
 
 class Box {
 public:
-    glm::vec3* LeftUpper;
-    glm::vec3* RightLower;
-    Pigment* Pig;
-    Transformations* Trans;
-    Finish* Fin;
+    glm::vec3 LeftUpper;
+    glm::vec3 RightLower;
+    glm::mat4x4 Transform;
+    Pigment Pig;
+    Finish Fin;
     
-    Box(std::string boxParams);
-    Box();
+    Box(std::string boxParams) {
+        std::string pigmentInfo;
+        std::string finishInfo;
+        ParsingUtility::NamedBracketedParameterToVec3(boxParams, "<", LeftUpper, 0, 1);
+        ParsingUtility::NamedBracketedParameterToVec3(boxParams, "<", RightLower, 0, 2);
+        
+        if (ParsingUtility::NamedBracketedParameterStringExtraction(boxParams, "pigment", pigmentInfo) > 0) {
+            Pig = Pigment(pigmentInfo);
+        }
+        if (ParsingUtility::NamedBracketedParameterStringExtraction(boxParams, "finish", finishInfo) > 0) {
+            Fin = Finish(finishInfo);
+        }
+        ParsingUtility::ExtractTransformationMatrix(boxParams, Transform);
+    }
+    Box() {
+        
+    }
 };
 
 #endif

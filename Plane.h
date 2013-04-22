@@ -9,19 +9,18 @@
 #include "ParsingUtility.h"
 #include "Pigment.h"
 #include "Finish.h"
-#include "Transformations.h"
 
 typedef struct Plane {
+    glm::mat4x4 Transform;
     glm::vec3 Normal;
     float Distance;
     Pigment Pig;
-    Transformations* Trans;
     Finish Fin;
     
     Plane(std::string planeParams) {
         std::string pigmentInfo;
         std::string finishInfo;
-        Normal = *ParsingUtility::NamedBracketedParameterToVec3(planeParams, "<", 0, 1);
+        ParsingUtility::NamedBracketedParameterToVec3(planeParams, "<", Normal, 0, 1);
         ParsingUtility::NamedSingleParameterToFloat(planeParams, ",", 3, Distance);
         
         if (ParsingUtility::NamedBracketedParameterStringExtraction(planeParams, "pigment", pigmentInfo) > 0) {
@@ -30,7 +29,7 @@ typedef struct Plane {
         if (ParsingUtility::NamedBracketedParameterStringExtraction(planeParams, "finish", finishInfo) > 0) {
             Fin = Finish(finishInfo);
         }
-        Trans = new Transformations(planeParams);
+        ParsingUtility::ExtractTransformationMatrix(planeParams, Transform);
     }
     
     Plane() {

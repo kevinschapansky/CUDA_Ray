@@ -13,7 +13,7 @@ typedef struct Pigment {
     float Filter;
     
     Pigment(std::string pigmentParams) {
-        Color = *ParsingUtility::NamedBracketedParameterToVec3(pigmentParams, "color rgb", 0, 1);
+        ParsingUtility::NamedBracketedParameterToVec3(pigmentParams, "color rgb", Color, 0, 1);
         if (ParsingUtility::NamedSingleParameterToFloat(pigmentParams, ",", 3, Filter) < 0) {
             Filter = 0;
         }

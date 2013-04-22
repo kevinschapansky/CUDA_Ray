@@ -6,8 +6,8 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
     
     if (i * blockDim.x + j > N) return;
 
-    float Us = data.Params.Left + (data.Params.Right - data.Params.Left) * ((i + 0.5) / ((float) data.Width));
-    float Vs = data.Params.Bottom + (data.Params.Top - data.Params.Bottom) * ((j + 0.5) / ((float) data.Height));
+    float Us = data.Params.Left + (data.Params.Right - data.Params.Left) * ((i + 0.5f) / ((float) data.Width));
+    float Vs = data.Params.Bottom + (data.Params.Top - data.Params.Bottom) * ((j + 0.5f) / ((float) data.Height));
     glm::vec3 sPrime = data.Cam.Location + Us * data.Params.U + Vs * data.Params.V + -1.0f * data.Params.W;
     glm::vec3 d = glm::normalize(data.Cam.Location - sPrime);
     glm::vec3 p0 = data.Cam.Location;
@@ -17,7 +17,7 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
     
     for (int k = 0; k < data.NumSpheres; k++) {
         float A = glm::dot(d, d);
-        float B = 2 * glm::dot(d, (p0 - data.Spheres[k].Position));
+        float B = 2.0f * glm::dot(d, (p0 - data.Spheres[k].Position));
         float C = glm::dot((p0 - data.Spheres[k].Position), (p0 - data.Spheres[k].Position))
         - data.Spheres[k].Radius * data.Spheres[k].Radius;
         float descriminant = B * B - 4 * A * C;
@@ -26,7 +26,7 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
         if (descriminant < 0) {
             continue;
         } else if (descriminant == 0) {
-            curIntersection = -B / (2 * A);
+            curIntersection = -B / (2.0f * A);
             
             if (curIntersection < closestIntersection) {
                 closestIntersection = curIntersection;
@@ -37,7 +37,7 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
             }
         } else {
             float root = std::sqrt(descriminant);
-            curIntersection = min(((-B + root) / (2 * A)), ((-B - root) / (2 * A)));
+            curIntersection = min(((-B + root) / (2.0f * A)), ((-B - root) / (2.0f * A)));
             
             if (curIntersection < closestIntersection) {
                 closestIntersection = curIntersection;
@@ -54,7 +54,7 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
         float t = glm::dot((P - p0), data.Planes[k].Normal) / denom;
         glm::vec3 colorVec = data.Planes[k].Pig.Color;
         
-        if (denom < 0.001) {
+        if (denom < 0.001f) {
             continue;
         }
         
@@ -90,82 +90,8 @@ Image* Raytracer::TraceScene() {
     Data.Params.Bottom = -Data.Params.Top;
     
     SetupAndLaunchCUDA();
-    //TraceSceneNoCUDA();
     
     return TracedScene;
-}
-
-void Raytracer::TraceSceneNoCUDA() {
-    for (int i = 0; i < Data.Width; i++) {
-        for (int j = 0; j < Data.Height; j++) {
-            float Us = Data.Params.Left + (Data.Params.Right - Data.Params.Left) * ((i + 0.5) / ((float) Data.Width));
-            float Vs = Data.Params.Bottom + (Data.Params.Top - Data.Params.Bottom) * ((j + 0.5) / ((float) Data.Height));
-            glm::vec3 sPrime = Data.Cam.Location + Us * Data.Params.U + Vs * Data.Params.V + -1.0f * Data.Params.W;
-            glm::vec3 d = glm::normalize(Data.Cam.Location - sPrime);
-            glm::vec3 p0 = Data.Cam.Location;
-            color_t color;
-            float closestIntersection = FLT_MAX;
-            float curIntersection;
-            
-            color.r = 0;
-            color.g = 0;
-            color.b = 0;
-            color.f = 0;
-            
-            for (int k = 0; k < Data.NumSpheres; k++) {
-                float A = glm::dot(d, d);
-                float B = 2 * glm::dot(d, (p0 - Data.Spheres[k].Position));
-                float C = glm::dot((p0 - Data.Spheres[k].Position), (p0 - Data.Spheres[k].Position))
-                - Data.Spheres[k].Radius * Data.Spheres[k].Radius;
-                float descriminant = B * B - 4 * A * C;
-                glm::vec3 colorVec = Data.Spheres[k].Pig.Color;
-                
-                if (descriminant < 0) {
-                    continue;
-                } else if (descriminant == 0) {
-                    curIntersection = -B / (2 * A);
-                    
-                    if (curIntersection < closestIntersection) {
-                        closestIntersection = curIntersection;
-                        color.r = colorVec.x;
-                        color.g = colorVec.y;
-                        color.b = colorVec.z;
-                        color.f = Data.Spheres[k].Pig.Filter;
-                    }
-                } else {
-                    float root = std::sqrt(descriminant);
-                    curIntersection = min(((-B + root) / (2 * A)), ((-B - root) / (2 * A)));
-                    
-                    if (curIntersection < closestIntersection) {
-                        closestIntersection = curIntersection;
-                        color.r = colorVec.x;
-                        color.g = colorVec.y;
-                        color.b = colorVec.z;
-                        color.f = Data.Spheres[k].Pig.Filter;
-                    }
-                }
-            }
-            for (int k = 0; k < Data.NumPlanes; k++) {
-                glm::vec3 P = glm::normalize(Data.Planes[k].Normal) * -Data.Planes[k].Distance;
-                float denom = glm::dot(d, Data.Planes[k].Normal);
-                float t = glm::dot((P - p0), Data.Planes[k].Normal) / denom;
-                glm::vec3 colorVec = Data.Planes[k].Pig.Color;
-                
-                if (denom < 0.001) {
-                    continue;
-                }
-                
-                if (t < closestIntersection) {
-                    closestIntersection = t;
-                    color.r = colorVec.x;
-                    color.g = colorVec.y;
-                    color.b = colorVec.z;
-                    color.f = Data.Planes[k].Pig.Filter;
-                }
-            }
-            TracedScene->pixel(i, j, color);
-        }
-    }
 }
 
 void Raytracer::SetupAndLaunchCUDA() {
@@ -202,7 +128,6 @@ void Raytracer::SetupAndLaunchCUDA() {
     for (int i = 0; i < Data.Width; i++) {
         for (int j = 0; j < Data.Height; j++) {
             TracedScene->pixel(i, j, scenePixels_h[i * Data.Height + j]);
-            //printf("%d\n", cudaData_h[i * j]);
         }
     }
 }
@@ -219,6 +144,8 @@ void Raytracer::ParseRawComponents(std::vector<std::string> components) {
             Spheres.push_back(Sphere(curComp));
         } else if (std::string::npos != curComp.find("plane")) {
             Planes.push_back(Plane(curComp));
+        } else if (std::string::npos != curComp.find("triangle")) {
+            Triangles.push_back(Triangle(curComp));
         }
     }
     Data.Lights = Lights.data();

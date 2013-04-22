@@ -13,8 +13,8 @@ typedef struct LightSource {
     glm::vec3 Color;
     
     LightSource(std::string lightParams) {
-        Position = *ParsingUtility::NamedBracketedParameterToVec3(lightParams, "<", 0, 1);
-        Color = *ParsingUtility::NamedBracketedParameterToVec3(lightParams, "color rgb", 0, 1);
+        ParsingUtility::NamedBracketedParameterToVec3(lightParams, "<", Position, 0, 1);
+        ParsingUtility::NamedBracketedParameterToVec3(lightParams, "color rgb", Color, 0, 1);
     }
     
     LightSource() {

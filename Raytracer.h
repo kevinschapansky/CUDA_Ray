@@ -55,11 +55,11 @@ public:
     std::vector<LightSource> Lights;
     std::vector<Sphere> Spheres;
     std::vector<Plane> Planes;
+    std::vector<Triangle> Triangles;
     
     Raytracer(int width, int height, std::vector<std::string> rawComponents);
     
     Image* TraceScene();
-    void TraceSceneNoCUDA();
 private:
     Image* TracedScene;
     

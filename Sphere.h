@@ -9,19 +9,18 @@
 #include "ParsingUtility.h"
 #include "Pigment.h"
 #include "Finish.h"
-#include "Transformations.h"
 
 typedef struct Sphere {
     glm::vec3 Position;
+    glm::mat4x4 Transform;
     float Radius;
     Pigment Pig;
-    Transformations* Trans;
     Finish Fin;
     
     Sphere(std::string sphereParams) {
         std::string pigmentInfo;
         std::string finishInfo;
-        Position = *ParsingUtility::NamedBracketedParameterToVec3(sphereParams, "<", 0, 1);
+        ParsingUtility::NamedBracketedParameterToVec3(sphereParams, "<", Position, 0, 1);
         ParsingUtility::NamedSingleParameterToFloat(sphereParams, ",", 3, Radius);
         
         if (ParsingUtility::NamedBracketedParameterStringExtraction(sphereParams, "pigment", pigmentInfo) > 0) {
@@ -30,9 +29,9 @@ typedef struct Sphere {
         if (ParsingUtility::NamedBracketedParameterStringExtraction(sphereParams, "finish", finishInfo) > 0) {
             Fin = Finish(finishInfo);
         }
-        Trans = new Transformations(sphereParams);
+        ParsingUtility::ExtractTransformationMatrix(sphereParams, Transform);
     }
-    
+
     Sphere() {
         
     }
