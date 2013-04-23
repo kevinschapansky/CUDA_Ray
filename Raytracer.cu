@@ -16,9 +16,11 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
     float curIntersection;
     
     for (int k = 0; k < data.NumSpheres; k++) {
-        float A = glm::dot(d, d);
-        float B = 2.0f * glm::dot(d, (p0 - data.Spheres[k].Position));
-        float C = glm::dot((p0 - data.Spheres[k].Position), (p0 - data.Spheres[k].Position))
+        glm::vec3 d_model = glm::vec3(glm::inverse(data.Spheres[k].Transform) * glm::vec4(d, 0));
+        glm::vec3 p0_model = glm::vec3(glm::inverse(data.Spheres[k].Transform) * glm::vec4(p0, 1));
+        float A = glm::dot(d_model, d_model);
+        float B = 2.0f * glm::dot(d_model, (p0_model - data.Spheres[k].Position));
+        float C = glm::dot((p0_model - data.Spheres[k].Position), (p0_model - data.Spheres[k].Position))
         - data.Spheres[k].Radius * data.Spheres[k].Radius;
         float descriminant = B * B - 4 * A * C;
         glm::vec3 colorVec = data.Spheres[k].Pig.Color;
@@ -49,9 +51,11 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
         }
     }
     for (int k = 0; k < data.NumPlanes; k++) {
+        glm::vec3 d_model = glm::vec3(glm::inverse(data.Planes[k].Transform) * glm::vec4(d, 0));
+        glm::vec3 p0_model = glm::vec3(glm::inverse(data.Planes[k].Transform) * glm::vec4(p0, 1));
         glm::vec3 P = glm::normalize(data.Planes[k].Normal) * -data.Planes[k].Distance;
-        float denom = glm::dot(d, data.Planes[k].Normal);
-        float t = glm::dot((P - p0), data.Planes[k].Normal) / denom;
+        float denom = glm::dot(d_model, data.Planes[k].Normal);
+        float t = glm::dot((P - p0_model), data.Planes[k].Normal) / denom;
         glm::vec3 colorVec = data.Planes[k].Pig.Color;
         
         if (denom < 0.001f) {

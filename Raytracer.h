@@ -10,6 +10,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #include "Camera.h"
 #include "LightSource.h"
@@ -20,6 +21,16 @@
 #include "Triangle.h"
 #include "Image.h"
 #include "Types.h"
+
+typedef struct LightingParameters {
+    glm::vec3 D_model;
+    glm::vec3 P0_model;
+    glm::vec3 SurfaceNormal;
+    glm::vec3 IntersectionPoint;
+    glm::vec3 Light_model;
+    Finish Fin;
+    Pigment Pig;
+} LightingParameters;
 
 typedef struct SceneParameters {
     glm::vec3 U;

@@ -67,7 +67,7 @@ int ParsingUtility::ExtractTransformationMatrix(std::string source,
                                                 glm::mat4x4 &result) {
     std::string transformName;
     glm::vec3 foundTransform;
-    result = glm::mat4x4(1);
+    result = glm::mat4(1);
     int foundIx;
     
     while ((foundIx = FindNextTransform(transformName, source) - 1) >= 0) {

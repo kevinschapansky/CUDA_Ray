@@ -5,6 +5,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #include "ParsingUtility.h"
 #include "Pigment.h"
@@ -14,7 +15,7 @@ class Box {
 public:
     glm::vec3 LeftUpper;
     glm::vec3 RightLower;
-    glm::mat4x4 Transform;
+    glm::mat4 Transform;
     Pigment Pig;
     Finish Fin;
     

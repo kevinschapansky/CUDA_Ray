@@ -5,13 +5,14 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #include "ParsingUtility.h"
 #include "Pigment.h"
 #include "Finish.h"
 
 typedef struct Plane {
-    glm::mat4x4 Transform;
+    glm::mat4 Transform;
     glm::vec3 Normal;
     float Distance;
     Pigment Pig;

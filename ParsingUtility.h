@@ -27,7 +27,7 @@ public:
                                                        std::string paramName,
                                                        std::string &destination);
     static int ExtractTransformationMatrix(std::string source,
-                                           glm::mat4x4 &result);
+                                           glm::mat4 &result);
 private:
     static int FindNextTransform(std::string &transformName,
                                  std::string source);

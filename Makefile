@@ -1,2 +1,2 @@
 all:
-	nvcc RaytraceMain.cpp Raytracer.cu ParsingUtility.cpp Image.cpp -o raytrace
+	nvcc  RaytraceMain.cpp Raytracer.cu ParsingUtility.cpp Image.cpp -o raytrace

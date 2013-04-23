@@ -5,6 +5,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #include "ParsingUtility.h"
 #include "Pigment.h"
@@ -12,7 +13,7 @@
 
 class Triangle {
 public:
-    glm::mat4x4 Transform;
+    glm::mat4 Transform;
     glm::vec3 Corner1;
     glm::vec3 Corner2;
     glm::vec3 Corner3;

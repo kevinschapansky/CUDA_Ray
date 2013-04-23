@@ -5,6 +5,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #include "ParsingUtility.h"
 #include "Pigment.h"
@@ -12,7 +13,7 @@
 
 typedef struct Sphere {
     glm::vec3 Position;
-    glm::mat4x4 Transform;
+    glm::mat4 Transform;
     float Radius;
     Pigment Pig;
     Finish Fin;
