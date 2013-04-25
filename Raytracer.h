@@ -14,23 +14,20 @@
 
 #include "Camera.h"
 #include "LightSource.h"
-#include "Sphere.h"
-#include "Box.h"
-#include "Cone.h"
-#include "Plane.h"
-#include "Triangle.h"
+#include "Shape.h"
 #include "Image.h"
 #include "Types.h"
 
-typedef struct LightingParameters {
-    glm::vec3 D_model;
-    glm::vec3 P0_model;
+typedef struct Intersection {
+    float T;
+    int ClosestShape;
     glm::vec3 SurfaceNormal;
-    glm::vec3 IntersectionPoint;
-    glm::vec3 Light_model;
-    Finish Fin;
-    Pigment Pig;
-} LightingParameters;
+} Intersection;
+
+typedef struct Ray {
+    glm::vec3 D;
+    glm::vec3 P0;
+} Ray;
 
 typedef struct SceneParameters {
     glm::vec3 U;
@@ -49,24 +46,19 @@ typedef struct SceneData {
     
     SceneParameters Params;
     Camera Cam;
-    LightSource* Lights;
-    LightSource* Lights_d;
+    
     int NumLights;
-    Plane* Planes;
-    Plane* Planes_d;
-    int NumPlanes;
-    Sphere* Spheres;
-    Sphere* Spheres_d;
-    int NumSpheres;
+    LightSource* Lights;
+    
+    int NumShapes;
+    Shape* Shapes;
 } SceneData;
 
 class Raytracer {
 public:
     SceneData Data;
-    std::vector<LightSource> Lights;
-    std::vector<Sphere> Spheres;
-    std::vector<Plane> Planes;
-    std::vector<Triangle> Triangles;
+    std::vector<LightSource *> Lights;
+    std::vector<Shape *> Shapes;
     
     Raytracer(int width, int height, std::vector<std::string> rawComponents);
     
