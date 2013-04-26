@@ -16,6 +16,7 @@ public:
     enum {BOX, CONE, PLANE, SPHERE, TRIANGLE};
     //needed by all types
     glm::mat4 Transform;
+    glm::mat4 InverseTransform;
     Pigment Pig;
     Finish Fin;
     int Type;
@@ -55,6 +56,7 @@ public:
             Fin = Finish(finishInfo);
         }
         ParsingUtility::ExtractTransformationMatrix(shapeParams, Transform);
+        InverseTransform = glm::inverse(Transform);
         
         switch (shapeType) {
             case BOX:

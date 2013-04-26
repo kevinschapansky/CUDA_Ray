@@ -9,8 +9,8 @@ __device__ Intersection GetIntersection(SceneData data, Ray ray, float minInt, f
     closestInt.ClosestShape = -1;
     
     for (int i = 0; i < data.NumShapes; i++) {
-        d_model = glm::vec3(glm::inverse(data.Shapes[i].Transform) * glm::vec4(ray.D, 0));
-        p0_model = glm::vec3(glm::inverse(data.Shapes[i].Transform) * glm::vec4(ray.P0, 1));
+        d_model = glm::vec3(data.Shapes[i].InverseTransform * glm::vec4(ray.D, 0));
+        p0_model = glm::vec3(data.Shapes[i].InverseTransform * glm::vec4(ray.P0, 1));
         
         if (data.Shapes[i].Type == Shape::SPHERE) {
             float A = glm::dot(d_model, d_model);
@@ -28,6 +28,7 @@ __device__ Intersection GetIntersection(SceneData data, Ray ray, float minInt, f
                 if (t < closestInt.T && t > minInt && t < maxInt) {
                     closestInt.T = t;
                     closestInt.ClosestShape = i;
+                    closestInt.SurfaceNormal = glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4((p0_model + t * d_model) - data.Shapes[i].Position, 0));
                 }
             } else {
                 float root = std::sqrt(descriminant);
@@ -35,20 +36,52 @@ __device__ Intersection GetIntersection(SceneData data, Ray ray, float minInt, f
                 if (t < closestInt.T && t > minInt && t < maxInt) {
                     closestInt.T = t;
                     closestInt.ClosestShape = i;
+                    closestInt.SurfaceNormal = glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4((p0_model + t * d_model) - data.Shapes[i].Position, 0));
                 }
             }
         } else if (data.Shapes[i].Type == Shape::PLANE) {
-            glm::vec3 P = glm::normalize(data.Shapes[i].Normal) * -data.Shapes[i].Distance;
+            glm::vec3 P = glm::normalize(data.Shapes[i].Normal) * data.Shapes[i].Distance;
             float denom = glm::dot(d_model, data.Shapes[i].Normal);
             float t = glm::dot((P - p0_model), data.Shapes[i].Normal) / denom;
 
-            if (denom > 0.001f && t < closestInt.T && t > minInt && t < maxInt) {
+            if (abs(denom) > 0.001f && t < closestInt.T && t > minInt && t < maxInt) {
                 closestInt.T = t;
                 closestInt.ClosestShape = i;
+                closestInt.SurfaceNormal = glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4(data.Shapes[i].Normal, 0));
             }
         }
     }
     return closestInt;
+}
+
+__device__ glm::vec3 GetLightingAtIntersection(SceneData data, Intersection inter, Ray ray) {
+    glm::vec3 intersectionColor(0);
+    Shape curShape = data.Shapes[inter.ClosestShape];
+    Intersection lightInt;
+    glm::vec3 intersectionPoint = ray.P0 + inter.T * ray.D;
+    glm::vec3 lightPosition_model;
+    Ray lightRay;
+    
+    lightRay.P0 = intersectionPoint;
+    intersectionColor = curShape.Pig.Color * curShape.Fin.Ambient;
+    
+    for (int i = 0; i < data.NumLights; i++) {
+        lightRay.D = glm::normalize(data.Lights[i].Position - intersectionPoint);
+        lightInt = GetIntersection(data, lightRay, 0.01f,
+                                   glm::length(data.Lights[i].Position - intersectionPoint));
+        
+        if (lightInt.ClosestShape < 0) {
+            glm::vec3 reflection = - 2.0f * (max(glm::dot(lightRay.D, inter.SurfaceNormal), 0.0f)) * inter.SurfaceNormal + lightRay.D;
+            
+            intersectionColor += curShape.Pig.Color * max(glm::dot(inter.SurfaceNormal, lightRay.D), 0.0f) * data.Lights[i].Color * curShape.Fin.Diffuse;
+            intersectionColor += curShape.Pig.Color * pow(max(glm::dot(-ray.D, reflection), 0.0f), 1.0f / curShape.Fin.Roughness) * data.Lights[i].Color * curShape.Fin.Specular;
+        }
+    }
+    intersectionColor.x = min(intersectionColor.x, 1.0f);
+    intersectionColor.y = min(intersectionColor.y, 1.0f);
+    intersectionColor.z = min(intersectionColor.z, 1.0f);
+    
+    return intersectionColor;
 }
 
 __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
@@ -69,17 +102,17 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
     Ray castRay;
     glm::vec3 pixelColor;
     
-    castRay.D = glm::normalize(data.Cam.Location - sPrime);
+    castRay.D = glm::normalize(sPrime - data.Cam.Location);
     castRay.P0 = data.Cam.Location;
     
-    Intersection closestInt = GetIntersection(data, castRay, -FLT_MAX, FLT_MAX);
+    Intersection closestInt = GetIntersection(data, castRay, FLT_MIN, FLT_MAX);
     
     if (closestInt.ClosestShape >= 0) {
-        pixelColor = data.Shapes[closestInt.ClosestShape].Pig.Color;
+        glm::vec3 pixelColor = GetLightingAtIntersection(data, closestInt, castRay);
         scenePixels[sceneIx].r = pixelColor.x;
         scenePixels[sceneIx].g = pixelColor.y;
         scenePixels[sceneIx].b = pixelColor.z;
-        scenePixels[sceneIx].f = data.Shapes[closestInt.ClosestShape].Pig.Filter;
+        scenePixels[sceneIx].f = 0;
     }
      
 }

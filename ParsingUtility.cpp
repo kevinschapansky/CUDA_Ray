@@ -45,8 +45,7 @@ int ParsingUtility::NamedSingleParameterToFloat(std::string source, std::string 
             return -1;
         }
     } while (curInstance != instance);
-    
-    result = atof(source.substr(namePos + 1).c_str());
+    result = atof(source.substr(namePos + name.length()).c_str());
     return 1;
 }
 
