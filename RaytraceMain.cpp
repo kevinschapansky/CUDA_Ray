@@ -11,7 +11,8 @@
 #define HEIGHT_POS 2
 #define FILE_FLAG 3
 #define FILE_POS 4
-#define ARG_COUNT 5
+#define SHADING_FLAG 5
+#define ARG_COUNT 6
 
 void parseFileIntoBlocks(std::string fileName, std::vector<std::string> & rawComponents);
 
@@ -19,9 +20,10 @@ int main(int argc, char **argv) {
     std::vector<std::string> rawComponents;
     std::string fileFlag = "-I";
     int width, height;
+    int shadingType;
     
     if (argc != ARG_COUNT || fileFlag.compare(argv[FILE_FLAG]) != 0) {
-        printf("Usage: raytrace <width> <height> -I <fileName\n");
+        printf("Usage: raytrace <width> <height> -I <fileName> <-P|-G>\n");
         return EXIT_FAILURE;
     }
     
@@ -29,7 +31,17 @@ int main(int argc, char **argv) {
     height = strtol(argv[HEIGHT_POS], NULL, 10);
     
     parseFileIntoBlocks(argv[FILE_POS], rawComponents);
-    Raytracer tracer(width, height, rawComponents);
+    
+    if (std::string(argv[SHADING_FLAG]).compare("-P") == 0) {
+        shadingType = Raytracer::PHONG;
+    } else if (std::string(argv[SHADING_FLAG]).compare("-G") == 0) {
+        shadingType = Raytracer::GAUSSIAN;
+    } else {
+        printf("Usage: raytrace <width> <height> -I <fileName> <-P|-G>\n");
+        return EXIT_FAILURE;
+    }
+    
+    Raytracer tracer(width, height, shadingType, rawComponents);
     Image* result = tracer.TraceScene();
     
     std::string fileName = argv[FILE_POS];

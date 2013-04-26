@@ -28,7 +28,7 @@ __device__ Intersection GetIntersection(SceneData data, Ray ray, float minInt, f
                 if (t < closestInt.T && t > minInt && t < maxInt) {
                     closestInt.T = t;
                     closestInt.ClosestShape = i;
-                    closestInt.SurfaceNormal = glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4((p0_model + t * d_model) - data.Shapes[i].Position, 0));
+                    closestInt.SurfaceNormal = glm::normalize(glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4((p0_model + t * d_model) - data.Shapes[i].Position, 0)));
                 }
             } else {
                 float root = std::sqrt(descriminant);
@@ -36,7 +36,7 @@ __device__ Intersection GetIntersection(SceneData data, Ray ray, float minInt, f
                 if (t < closestInt.T && t > minInt && t < maxInt) {
                     closestInt.T = t;
                     closestInt.ClosestShape = i;
-                    closestInt.SurfaceNormal = glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4((p0_model + t * d_model) - data.Shapes[i].Position, 0));
+                    closestInt.SurfaceNormal = glm::normalize(glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4((p0_model + t * d_model) - data.Shapes[i].Position, 0)));
                 }
             }
         } else if (data.Shapes[i].Type == Shape::PLANE) {
@@ -47,7 +47,7 @@ __device__ Intersection GetIntersection(SceneData data, Ray ray, float minInt, f
             if (abs(denom) > 0.001f && t < closestInt.T && t > minInt && t < maxInt) {
                 closestInt.T = t;
                 closestInt.ClosestShape = i;
-                closestInt.SurfaceNormal = glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4(data.Shapes[i].Normal, 0));
+                closestInt.SurfaceNormal = glm::normalize(glm::vec3(glm::inverseTranspose(data.Shapes[i].Transform) * glm::vec4(data.Shapes[i].Normal, 0)));
             }
         }
     }
@@ -71,10 +71,19 @@ __device__ glm::vec3 GetLightingAtIntersection(SceneData data, Intersection inte
                                    glm::length(data.Lights[i].Position - intersectionPoint));
         
         if (lightInt.ClosestShape < 0) {
-            glm::vec3 reflection = - 2.0f * (max(glm::dot(lightRay.D, inter.SurfaceNormal), 0.0f)) * inter.SurfaceNormal + lightRay.D;
+            glm::vec3 reflection = glm::normalize(-lightRay.D + 2.0f * (max(glm::dot(lightRay.D, inter.SurfaceNormal), 0.0f)) * inter.SurfaceNormal);
             
             intersectionColor += curShape.Pig.Color * max(glm::dot(inter.SurfaceNormal, lightRay.D), 0.0f) * data.Lights[i].Color * curShape.Fin.Diffuse;
-            intersectionColor += curShape.Pig.Color * pow(max(glm::dot(-ray.D, reflection), 0.0f), 1.0f / curShape.Fin.Roughness) * data.Lights[i].Color * curShape.Fin.Specular;
+            
+            if (data.ShadingType == Raytracer::PHONG) {
+                intersectionColor += curShape.Pig.Color * pow(max(glm::dot(-ray.D, reflection), 0.0f), 1.0f / curShape.Fin.Roughness) * data.Lights[i].Color * curShape.Fin.Specular;
+            } else if (data.ShadingType == Raytracer::GAUSSIAN) {
+                glm::vec3 rayReflect = glm::normalize(- 2.0f * glm::dot(ray.D, inter.SurfaceNormal) * inter.SurfaceNormal + ray.D);
+                float exponent = acos(glm::dot(rayReflect, lightRay.D)) / curShape.Fin.Roughness;
+                exponent = -(exponent * exponent);
+                
+                intersectionColor += pow(2.71828f, exponent) * curShape.Fin.Specular * data.Lights[i].Color;
+            }
         }
     }
     intersectionColor.x = min(intersectionColor.x, 1.0f);
@@ -135,10 +144,11 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
 
 
 
-Raytracer::Raytracer(int width, int height, std::vector<std::string> rawComponents) {
+Raytracer::Raytracer(int width, int height, int shadingType, std::vector<std::string> rawComponents) {
     Data.Width = width;
     Data.Height = height;
-    
+    Data.ShadingType = shadingType;
+
     ParseRawComponents(rawComponents);
 }
 

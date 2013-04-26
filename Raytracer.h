@@ -46,6 +46,7 @@ typedef struct SceneParameters {
 typedef struct SceneData {
     int Width;
     int Height;
+    int ShadingType;
     
     SceneParameters Params;
     Camera Cam;
@@ -63,8 +64,9 @@ public:
     std::vector<LightSource *> Lights;
     std::vector<Shape *> Shapes;
     
-    Raytracer(int width, int height, std::vector<std::string> rawComponents);
+    Raytracer(int width, int height, int shadingType, std::vector<std::string> rawComponents);
     
+    enum {PHONG, GAUSSIAN};
     Image* TraceScene();
 private:
     Image* TracedScene;
