@@ -100,21 +100,37 @@ __global__ void CUDATrace(SceneData data, color_t *scenePixels, int N) {
     float Vs = data.Params.Bottom + (data.Params.Top - data.Params.Bottom) * ((j + 0.5f) / ((float) data.Height));
     glm::vec3 sPrime = data.Cam.Location + Us * data.Params.U + Vs * data.Params.V + -1.0f * data.Params.W;
     Ray castRay;
-    glm::vec3 pixelColor;
+    glm::vec3 pixelColor(0);
     
     castRay.D = glm::normalize(sPrime - data.Cam.Location);
     castRay.P0 = data.Cam.Location;
     
     Intersection closestInt = GetIntersection(data, castRay, FLT_MIN, FLT_MAX);
+    glm::vec3 bounceColors[NUM_REFLECTIONS];
+    float shapeReflection[NUM_REFLECTIONS] = {0.0f};
     
-    if (closestInt.ClosestShape >= 0) {
-        glm::vec3 pixelColor = GetLightingAtIntersection(data, closestInt, castRay);
-        scenePixels[sceneIx].r = pixelColor.x;
-        scenePixels[sceneIx].g = pixelColor.y;
-        scenePixels[sceneIx].b = pixelColor.z;
-        scenePixels[sceneIx].f = 0;
+    for (int i = 0; i < NUM_REFLECTIONS && closestInt.ClosestShape >= 0; i++) {
+        shapeReflection[i] = data.Shapes[closestInt.ClosestShape].Fin.Reflection;
+        bounceColors[i] = GetLightingAtIntersection(data, closestInt, castRay);
+        
+        castRay.P0 = castRay.P0 + closestInt.T * castRay.D;
+        castRay.D = glm::normalize(- 2.0f * glm::dot(castRay.D, closestInt.SurfaceNormal) * closestInt.SurfaceNormal + castRay.D);
+        closestInt = GetIntersection(data, castRay, 0.01f, FLT_MAX);
     }
-     
+    
+    for (int i = NUM_REFLECTIONS - 1; i >= 0; i--) {
+        pixelColor = (1.0f - shapeReflection[i]) * bounceColors[i] + shapeReflection[i] * pixelColor;
+    }
+    
+    pixelColor.x = min(pixelColor.x, 1.0f);
+    pixelColor.y = min(pixelColor.y, 1.0f);
+    pixelColor.z = min(pixelColor.z, 1.0f);
+    
+    scenePixels[sceneIx].r = pixelColor.x;
+    scenePixels[sceneIx].g = pixelColor.y;
+    scenePixels[sceneIx].b = pixelColor.z;
+    scenePixels[sceneIx].f = 0;
+    
 }
 
 

@@ -19,6 +19,8 @@
 #include "Image.h"
 #include "Types.h"
 
+#define NUM_REFLECTIONS 6
+
 typedef struct Intersection {
     float T;
     int ClosestShape;
